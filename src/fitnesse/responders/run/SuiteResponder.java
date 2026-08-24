@@ -44,6 +44,7 @@ import fitnesse.wiki.PathParser;
 import fitnesse.wiki.WikiImportProperty;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.WikiPagePath;
+import fitnesse.wiki.WikiPageProperty;
 import fitnesse.wiki.WikiPageUtil;
 import org.apache.commons.lang3.StringUtils;
 import util.FileUtil;
@@ -135,9 +136,12 @@ public class SuiteResponder extends ChunkingResponder implements SecureResponder
   }
 
   private void cleanHistoryForSuite() {
-    String testHistoryDays = context.getProperty("test.history.days");
-    if (withSuiteHistoryFormatter() && StringUtils.isNumeric(testHistoryDays)) {
-      new HistoryPurger(context.getTestHistoryDirectory(), Integer.parseInt(testHistoryDays))
+    String testHistoryDays = context.getProperty("TestHistory.days");
+    String testHistoryDaysDeprecated = StringUtils.isBlank(testHistoryDays)
+        ? context.getProperty("test.history.days")
+        : testHistoryDays;
+    if (withSuiteHistoryFormatter() && StringUtils.isNumeric(testHistoryDaysDeprecated)) {
+      new HistoryPurger(context.getTestHistoryDirectory(), Integer.parseInt(testHistoryDaysDeprecated))
               .deleteTestHistoryOlderThanDays(path);
     }
   }
@@ -262,7 +266,8 @@ public class SuiteResponder extends ChunkingResponder implements SecureResponder
   }
 
   private boolean withSuiteHistoryFormatter() {
-    return !request.hasInput("nohistory");
+    return !request.hasInput("nohistory")
+        && !page.getData().hasAttribute(WikiPageProperty.DISABLE_TESTHISTORY);
   }
 
   protected void addHistoryFormatter(MultipleTestsRunner runner) {

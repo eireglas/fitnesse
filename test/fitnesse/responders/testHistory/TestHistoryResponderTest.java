@@ -347,11 +347,11 @@ public class TestHistoryResponderTest {
   @Test
   public void shouldShowDefaultPurgeOptions() throws Exception {
     MockRequest request = new MockRequest();
-    SimpleResponse response = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
-    String html = response.getContent();
-    assertSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=0\" onclick=\"purgeConfirmation(event)\">Purge all</a>", html);
-    assertSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=7\" onclick=\"purgeConfirmation(event)\">Purge &gt; 7 days</a>", html);
-    assertSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=30\" onclick=\"purgeConfirmation(event)\">Purge &gt; 30 days</a>", html);
+    SimpleResponse resp = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=0\" onclick=\"purgeConfirmation(event)\">Purge all</a>", html);
+    assertSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=7\" onclick=\"purgeConfirmation(event)\">Purge &gt; 7 days</a>", html);
+    assertSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=30\" onclick=\"purgeConfirmation(event)\">Purge &gt; 30 days</a>", html);
     assertSubString("<label for=\"purgeGlobal\"><input type=\"checkbox\" id=\"purgeGlobal\" />Purge global</label>", html);
   }
 
@@ -359,12 +359,12 @@ public class TestHistoryResponderTest {
   public void shouldShowConfiguredPurgeOptions() throws Exception {
     MockRequest request = new MockRequest();
     context.getProperties().setProperty(ConfigurationParameter.PURGE_OPTIONS.getKey(), "30,60,90");
-    SimpleResponse response = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
-    String html = response.getContent();
-    assertNotSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=0\" onclick=\"purgeConfirmation(event)\">Purge all</a>", html);
-    assertSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=30\" onclick=\"purgeConfirmation(event)\">Purge &gt; 30 days</a>", html);
-    assertSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=60\" onclick=\"purgeConfirmation(event)\">Purge &gt; 60 days</a>", html);
-    assertSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=90\" onclick=\"purgeConfirmation(event)\">Purge &gt; 90 days</a>", html);
+    SimpleResponse resp = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertNotSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=0\" onclick=\"purgeConfirmation(event)\">Purge all</a>", html);
+    assertSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=30\" onclick=\"purgeConfirmation(event)\">Purge &gt; 30 days</a>", html);
+    assertSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=60\" onclick=\"purgeConfirmation(event)\">Purge &gt; 60 days</a>", html);
+    assertSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=90\" onclick=\"purgeConfirmation(event)\">Purge &gt; 90 days</a>", html);
     assertSubString("<label for=\"purgeGlobal\"><input type=\"checkbox\" id=\"purgeGlobal\" />Purge global</label>", html);
   }
   
@@ -372,10 +372,81 @@ public class TestHistoryResponderTest {
   public void shouldShowNoPurgeOptions() throws Exception {
     MockRequest request = new MockRequest();
     context.getProperties().setProperty(ConfigurationParameter.PURGE_OPTIONS.getKey(), "");
-    SimpleResponse response = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
-    String html = response.getContent();
-    assertNotSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=0\" onclick=\"purgeConfirmation(event)\">Purge all</a>", html);
-    assertNotSubString("<a class=\"button\" href=\"?responder=purgeHistory&days=7\" onclick=\"purgeConfirmation(event)\">Purge &gt; 7 days</a>", html);
+    SimpleResponse resp = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertNotSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=0\" onclick=\"purgeConfirmation(event)\">Purge all</a>", html);
+    assertNotSubString("<a class=\"btn btn-outline-secondary\" href=\"?responder=purgeHistory&days=7\" onclick=\"purgeConfirmation(event)\">Purge &gt; 7 days</a>", html);
     assertNotSubString("<label for=\"purgeGlobal\"><input type=\"checkbox\" id=\"purgeGlobal\" />Purge global</label>", html);
+  }
+
+  @Test
+  public void shouldShowDefaultLastNResultButtons() throws Exception {
+    MockRequest request = new MockRequest();
+    SimpleResponse resp  = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertSubString("?responder=testHistory&results=3", html);
+    assertSubString(">Last 3<", html);
+    assertSubString("?responder=testHistory&results=5", html);
+    assertSubString("?responder=testHistory&results=10", html);
+    assertSubString("?responder=testHistory&results=20", html);
+  }
+
+  @Test
+  public void shouldShowConfiguredNResultButtons() throws Exception {
+    MockRequest request = new MockRequest();
+    context.getProperties().setProperty(ConfigurationParameter.TESTHISTORY_OPTIONS.getKey(), "1,50,999");
+    SimpleResponse resp = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertNotSubString("?responder=testHistory&results=3", html);
+    assertSubString(">Last 999<", html);
+    assertSubString("?responder=testHistory&results=1", html);
+    assertSubString("?responder=testHistory&results=50", html);
+    assertSubString("?responder=testHistory&results=999", html);
+  }
+
+  @Test
+  public void shouldShowConfiguredNResultButtonsLimitedByMaxCount() throws Exception {
+    MockRequest request = new MockRequest();
+    context.getProperties().setProperty(ConfigurationParameter.TESTHISTORY_MAX_COUNT.getKey(), "60");
+    context.getProperties().setProperty(ConfigurationParameter.TESTHISTORY_OPTIONS.getKey(), "1,50,999");
+    SimpleResponse resp = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertNotSubString("?responder=testHistory&results=3", html);
+    assertSubString(">Last 50<", html);
+    assertSubString("?responder=testHistory&results=1", html);
+    assertSubString("?responder=testHistory&results=50", html);
+    assertNotSubString("?responder=testHistory&results=999", html);
+  }
+
+  @Test
+  public void shouldShowNoNResultButtons() throws Exception {
+    MockRequest request = new MockRequest();
+    context.getProperties().setProperty(ConfigurationParameter.TESTHISTORY_OPTIONS.getKey(), "");
+    SimpleResponse resp  = (SimpleResponse) new TestHistoryResponder().makeResponse(context, request);
+    String html = resp.getContent();
+    assertNotSubString("?responder=testHistory&results=3", html);
+    assertNotSubString(">Last 20<", html);
+    assertNotSubString("?responder=testHistory&results=20", html);
+  }
+
+  @Test
+  public void shouldOfferTrimCheckboxWhenSuggestionExists() throws Exception {
+    addPageDirectoryWithOneResult("FitNesse.SuiteAcceptanceTests.DummyPage", "20090418123103_1_0_0_0");
+    makeResponse();                               
+    String html = response.getContent();
+    assertSubString("id=\"trimPath\"", html);
+    assertDoesntHaveRegexp("id=\"trimPath\"[^\n]+checked", html);
+    assertSubString("Trim page names", html);
+  }
+
+  @Test
+  public void shouldRenderTrimCheckboxCheckedWhenTrimIsApplied() throws Exception {
+    addPageDirectoryWithOneResult("FitNesse.SuiteAcceptanceTests.DummyPage", "20090418123103_1_0_0_0");
+    MockRequest req = new MockRequest();
+    req.addInput("trim", "FitNesse.SuiteAcceptanceTests.");
+    SimpleResponse resp = (SimpleResponse) new TestHistoryResponder().makeResponse(context, req);
+    String html = resp.getContent();
+    assertSubString("id=\"trimPath\"", html);
+    assertHasRegexp("id=\"trimPath\"[\\s\\S]*?checked", html);
   }
 }
